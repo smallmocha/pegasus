@@ -2,7 +2,6 @@
 #define BUFFER_H
 
 #include <vector>
-#include <atomic>
 #include <string>
 #include <unistd.h>
 #include <sys/uio.h>
@@ -34,8 +33,8 @@ private:
     void MakeSpace(size_t len);
 
     std::vector<char> buffer_;
-    std::atomic<size_t> readIndex_;
-    std::atomic<size_t> writeIndex_;
+    size_t readIndex_;
+    size_t writeIndex_;
 };
 
 #endif //BUFFER_H

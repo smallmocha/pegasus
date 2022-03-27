@@ -64,7 +64,7 @@ public:
 
 private:
     int epollFd_;
-    std::vector<struct epoll_event> events_;    
+    std::vector<epoll_event> events_;    
 };
 
 #endif

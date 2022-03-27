@@ -9,7 +9,7 @@ int HttpConn::Read(int &saveErrno)
         if (len <= 0) {
             break;
         }
-        printf("recv msg:\n %s\n", std::string(readBuff_.BeginRead(), readBuff_.ReadableBytes()).c_str());
+        printf("recv msg:\n%s\n", std::string(readBuff_.BeginRead(), readBuff_.ReadableBytes()).c_str());
     } while (true);
     return len;
 }
@@ -32,7 +32,7 @@ bool HttpConn::Process()
         return false;
     }
     readBuff_.RetrieveAll();
-    std::string str = "HTTP/1.1 200 OK\r\nConnection: Keep-Alive\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Length: 15\r\n\r\nMyTinyWebServer";
+    std::string str = "HTTP/1.1 200 OK\r\nConnection: Keep-Alive\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Length: 7\r\n\r\npegasus";
     writeBuff_.Append(str);
     return true;
 }
