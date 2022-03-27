@@ -106,16 +106,14 @@ bool WebServer::InitSocket()
     ::signal(SIGPIPE, SIG_IGN);
 
     listenFd_ = socket(AF_INET, SOCK_STREAM, 0);
-    if (listenFd_ < 0)
-    {
+    if (listenFd_ < 0) {
         return false;
     }
 
     // 设置地址复用
     int optval = 1;
     int ret = setsockopt(listenFd_, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
-    if (ret < 0)
-    {
+    if (ret < 0) {
         return false;
     }
 
@@ -125,19 +123,16 @@ bool WebServer::InitSocket()
     addr.sin_addr.s_addr = htonl(INADDR_ANY);
 
     ret = bind(listenFd_, reinterpret_cast<sockaddr *>(&addr), sizeof(addr));
-    if (ret < 0)
-    {
+    if (ret < 0) {
         return false;
     }
 
     ret = listen(listenFd_, 6);
-    if (ret < 0)
-    {
+    if (ret < 0) {
         return false;
     }
 
-    if (!epoller_.AddFd(listenFd_, EPOLLIN))
-    {
+    if (!epoller_.AddFd(listenFd_, EPOLLIN)) {
         return false;
     }
 
