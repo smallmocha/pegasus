@@ -26,6 +26,7 @@ private:
 
     void OnRead(HttpConn &client);
     void OnWrite(HttpConn &client);
+    void OnProcess(HttpConn &client);
 
     static void SetFdNonBlock(int fd) 
     {

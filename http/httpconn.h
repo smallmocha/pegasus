@@ -58,6 +58,11 @@ public:
         return timer_;
     }
 
+    int ToWriteBytes()
+    {
+        return iov_[0].iov_len + iov_[1].iov_len;
+    }
+
     int Read(int &saveErrno);
     int Write(int &saveErrno);
 

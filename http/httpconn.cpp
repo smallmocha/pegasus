@@ -25,7 +25,7 @@ int HttpConn::Write(int &saveErrno)
             saveErrno = errno;
             break;
         }
-        if (iov_[0].iov_len + iov_[1].iov_len == 0) {
+        if (ToWriteBytes() == 0) {
             break;
         } else if (static_cast<size_t>(len) > iov_[0].iov_len) {
             iov_[1].iov_base = static_cast<char *>(iov_[1].iov_base) + len - iov_[0].iov_len;
@@ -66,6 +66,6 @@ bool HttpConn::Process()
         iov_[1].iov_len = httpResponse_.FileLen();
         iovCnt_ = 2;
     }
-    LOG_INFO("filesize:%d, %d  to %d", httpResponse_.FileLen() , iovCnt_, iov_[0].iov_len + iov_[1].iov_len);
+    LOG_INFO("filesize:%d, %d  to %d", httpResponse_.FileLen() , iovCnt_, ToWriteBytes());
     return true;
 }

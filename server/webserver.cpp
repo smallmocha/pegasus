@@ -77,6 +77,14 @@ void WebServer::CloseConn(HttpConn &client)
     client.Close();
 }
 
+void WebServer::OnProcess(HttpConn &client) {
+    if (client.Process()) {
+        epoller_.ModFd(client.GetFd(), EPOLLET | EPOLLOUT | EPOLLONESHOT | EPOLLRDHUP);
+    } else {
+        epoller_.ModFd(client.GetFd(), EPOLLET | EPOLLIN | EPOLLONESHOT | EPOLLRDHUP);
+    }
+}
+
 void WebServer::OnRead(HttpConn &client)
 {
     int err = 0;
@@ -84,24 +92,27 @@ void WebServer::OnRead(HttpConn &client)
     if (ret <= 0 && err != EAGAIN) {
         LOG_WARNING("fd=%d read err, err=%d", client.GetFd(), err);
         CloseConn(client);
-    } else {
-        if (client.Process()) {
-            epoller_.ModFd(client.GetFd(), EPOLLET | EPOLLOUT | EPOLLONESHOT | EPOLLRDHUP);
-        } else {
-            epoller_.ModFd(client.GetFd(), EPOLLET | EPOLLIN | EPOLLONESHOT | EPOLLRDHUP);
-        }
+        return;
     }
+    OnProcess(client);
 }
 
 void WebServer::OnWrite(HttpConn &client)
 {
     int err = 0;
     int ret = client.Write(err);
-    if (ret < 0 && err != EAGAIN) {
-        CloseConn(client);
+    if (client.ToWriteBytes() == 0) {
+        // 传输完成
+        OnProcess(client);
         return;
     }
-    epoller_.ModFd(client.GetFd(), EPOLLIN | EPOLLET | EPOLLONESHOT);
+    if (ret < 0) {
+        if (err == EAGAIN) {
+            epoller_.ModFd(client.GetFd(), EPOLLET | EPOLLOUT | EPOLLONESHOT | EPOLLRDHUP);
+            return;
+        }
+    }
+    CloseConn(client);
 }
 
 void WebServer::Run()
