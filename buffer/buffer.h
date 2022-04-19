@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <string>
+#include <atomic>
 #include <unistd.h>
 #include <sys/uio.h>
 
@@ -16,11 +17,15 @@ public:
     size_t PrependableBytes() const;
 
     void Retrieve(size_t len);
+    void RetrieveUtil(const char *end);
     void RetrieveAll() ;
     std::string RetrieveAllToStr();
 
+    void HasWritten(size_t len);
+
     char* BeginWrite();
-    char* BeginRead();
+    const char* BeginWriteConst();
+    const char* BeginRead();
 
     void Append(const std::string& str);
     void Append(const char* str, size_t len);
@@ -33,8 +38,8 @@ private:
     void MakeSpace(size_t len);
 
     std::vector<char> buffer_;
-    size_t readIndex_;
-    size_t writeIndex_;
+    std::atomic<size_t> readIndex_;
+    std::atomic<size_t> writeIndex_;
 };
 
 #endif //BUFFER_H

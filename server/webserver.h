@@ -6,6 +6,7 @@
 #include "epoller/epoller.h"
 #include "threadpool/threadpool.h"
 #include "http/httpconn.h"
+#include "timer/timer.h"
 
 class WebServer {
 public:
@@ -37,6 +38,7 @@ private:
     bool isClosed_;
     std::shared_ptr<ThreadPool> threadPool_;
     Epoller epoller_;
+    TimerQueue timerQueue_;
     std::unordered_map<int, HttpConn> users_;
 };
 

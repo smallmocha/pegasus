@@ -24,6 +24,12 @@ void Buffer::Retrieve(size_t len)
     readIndex_ += len;
 }
 
+void Buffer::RetrieveUtil(const char *end)
+{
+    assert(BeginRead() < end);
+    Retrieve(end - BeginRead());
+}
+
 void Buffer::RetrieveAll() 
 {
     readIndex_ = 0;
@@ -37,12 +43,22 @@ std::string Buffer::RetrieveAllToStr()
     return str;
 }
 
+void Buffer::HasWritten(size_t len)
+{
+    writeIndex_ += len;
+}
+
 char* Buffer::BeginWrite() 
 {
     return buffer_.data() + writeIndex_;
 }
 
-char* Buffer::BeginRead() 
+const char* Buffer::BeginWriteConst() 
+{
+    return buffer_.data() + writeIndex_;
+}
+
+const char* Buffer::BeginRead() 
 {
     return buffer_.data() + readIndex_;
 }
@@ -112,7 +128,7 @@ void Buffer::MakeSpace(size_t len)
     } 
     else {
         size_t readable = ReadableBytes();
-        std::copy(BeginRead(), BeginWrite(), buffer_.data());
+        std::copy(BeginRead(), BeginWriteConst(), buffer_.data());
         readIndex_ = 0;
         writeIndex_ = readIndex_ + readable;
     }

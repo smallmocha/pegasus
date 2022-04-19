@@ -1,5 +1,7 @@
 #include "httpconn.h"
-#include <string>
+#include "log/log.h"
+
+std::string HttpConn::srcDir_;
 
 int HttpConn::Read(int &saveErrno)
 {
@@ -18,9 +20,24 @@ int HttpConn::Write(int &saveErrno)
 {
     ssize_t len = -1;
     do {
-        len = writeBuff_.WriteFd(connFd_, saveErrno);
+        len = writev(connFd_, iov_, iovCnt_);
         if (len <= 0) {
+            saveErrno = errno;
             break;
+        }
+        if (iov_[0].iov_len + iov_[1].iov_len == 0) {
+            break;
+        } else if (static_cast<size_t>(len) > iov_[0].iov_len) {
+            iov_[1].iov_base = static_cast<char *>(iov_[1].iov_base) + len - iov_[0].iov_len;
+            iov_[1].iov_len -= len - iov_[0].iov_len;
+            if (iov_[0].iov_len > 0) {
+                iov_[0].iov_len = 0;
+                writeBuff_.RetrieveAll();
+            }
+        } else {
+            iov_[0].iov_base = static_cast<char *>(iov_[0].iov_base) + len;
+            iov_[0].iov_len -= len;
+            writeBuff_.Retrieve(len);
         }
     } while (true);
     return len;
@@ -28,11 +45,27 @@ int HttpConn::Write(int &saveErrno)
 
 bool HttpConn::Process()
 {
+    httpRequst_.Init();
     if (readBuff_.ReadableBytes() <= 0) {
         return false;
     }
-    readBuff_.RetrieveAll();
-    std::string str = "HTTP/1.1 200 OK\r\nConnection: Keep-Alive\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Length: 7\r\n\r\npegasus";
-    writeBuff_.Append(str);
+    if (httpRequst_.Parse(readBuff_)) {
+        httpResponse_.Init(srcDir_, httpRequst_.Path(), 200);
+    } else {
+        httpResponse_.Init(srcDir_, httpRequst_.Path(), 400);
+    }
+
+    httpResponse_.MakeResponse(writeBuff_);
+
+    iov_[0].iov_base = const_cast<char *>(writeBuff_.BeginRead());
+    iov_[0].iov_len = writeBuff_.ReadableBytes();
+    iovCnt_ = 1;
+
+    if (httpResponse_.File() != nullptr && httpResponse_.FileLen() > 0) {
+        iov_[1].iov_base = httpResponse_.File();
+        iov_[1].iov_len = httpResponse_.FileLen();
+        iovCnt_ = 2;
+    }
+    LOG_INFO("filesize:%d, %d  to %d", httpResponse_.FileLen() , iovCnt_, iov_[0].iov_len + iov_[1].iov_len);
     return true;
 }
