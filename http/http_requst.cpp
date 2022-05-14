@@ -65,7 +65,6 @@ bool HttpRequst::ParseRequstLine(const std::string &line)
                 }
             }
         }
-
         return true;
     }
     return false;
@@ -77,8 +76,6 @@ void HttpRequst::ParseHeader(const std::string &line)
     std::smatch subMatch;
     if(!regex_match(line, subMatch, patten)) {
         state_ = PARSE_BODY;
-    } else {
-        
     }
 }
 

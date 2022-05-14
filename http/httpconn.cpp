@@ -11,7 +11,6 @@ int HttpConn::Read(int &saveErrno)
         if (len <= 0) {
             break;
         }
-        // printf("recv msg:\n%s\n", std::string(readBuff_.BeginRead(), readBuff_.ReadableBytes()).c_str());
     } while (true);
     return len;
 }

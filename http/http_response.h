@@ -57,6 +57,7 @@ private:
     void AppendHeader(Buffer &buffer);
     void AppendContent(Buffer &buffer);
     void ErrorHtml();
+    void ErrorContent(Buffer &buff, std::string &message);
 
     std::string GetFileType();
 
