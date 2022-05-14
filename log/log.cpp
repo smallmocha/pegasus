@@ -53,8 +53,8 @@ void Log::Init(int level, std::string path, std::string suffix, size_t queCapaci
     today_ = t.tm_mday;
 
     char fileName[256];
-    snprintf(fileName, sizeof(fileName) - 1, "%s/%04d_%02d_%02d%s", path_.c_str(),
-        t.tm_year + 1900, t.tm_mon + 1, t.tm_mday, suffix_.c_str());
+    snprintf(fileName, sizeof(fileName) - 1, "%s/%04d_%02d_%02d_%02d_%02d_%02d%s", path_.c_str(),
+        t.tm_year + 1900, t.tm_mon + 1, t.tm_mday, t.tm_hour, t.tm_min, t.tm_sec, suffix_.c_str());
     {
         std::lock_guard<std::mutex> locker(mtx_);
         buffer_.RetrieveAll();
@@ -82,14 +82,11 @@ void Log::Write(int level, const char *format, ...)
     std::lock_guard<std::mutex> locker(mtx_);
     if ((today_ != t.tm_mday) || (lineCnt_ > 0 && lineCnt_ % MAX_LINES == 0)) {
         char fileName[256];
+        snprintf(fileName, sizeof(fileName) - 1, "%s/%04d_%02d_%02d_%02d_%02d_%02d%s", path_.c_str(),
+            t.tm_year + 1900, t.tm_mon + 1, t.tm_mday, t.tm_hour, t.tm_min, t.tm_sec, suffix_.c_str());
         if (today_ != t.tm_mday) {
-            snprintf(fileName, sizeof(fileName) - 1, "%s/%04d_%02d_%02d%s", path_.c_str(),
-                t.tm_year + 1900, t.tm_mon + 1, t.tm_mday, suffix_.c_str());
             lineCnt_ = 0;
             today_ = t.tm_mday;
-        } else {
-            snprintf(fileName, sizeof(fileName) - 1, "%s/%04d_%02d_%02d_%d%s", path_.c_str(),
-                t.tm_year + 1900, t.tm_mon + 1, t.tm_mday, lineCnt_ / MAX_LINES, suffix_.c_str());
         }
         Flush();
         fclose(fp_);
