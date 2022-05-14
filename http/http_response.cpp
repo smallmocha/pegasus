@@ -95,10 +95,10 @@ void HttpResponse::AppendHeader(Buffer &buffer)
     buffer.Append("Content-Type: " + GetFileType() + "\r\n");
 }
 
-void HttpResponse::ErrorContent(Buffer &buff, std::string &message)
+void HttpResponse::ErrorContent(Buffer &buff, const std::string &message)
 {
-    string body;
-    string status;
+    std::string body;
+    std::string status;
     body += "<html><title>Error</title>";
     body += "<body bgcolor=\"ffffff\">";
     if(CODE_STATUS.count(code_) == 1) {
@@ -106,10 +106,10 @@ void HttpResponse::ErrorContent(Buffer &buff, std::string &message)
     } else {
         status = "Bad Request";
     }
-    body += to_string(code_) + " : " + status  + "\n";
+    body += std::to_string(code_) + " : " + status  + "\n";
     body += "<p>" + message + "</p>";
     body += "<hr><em>pegasus</em></body></html>";
-    buff.Append("Content-length: " + to_string(body.size()) + "\r\n\r\n");
+    buff.Append("Content-length: " + std::to_string(body.size()) + "\r\n\r\n");
     buff.Append(body);
 }
 
@@ -117,7 +117,7 @@ void HttpResponse::AppendContent(Buffer &buffer)
 {
     int srcFd = open((srcDir_ + path_).data(), O_RDONLY);
     if(srcFd < 0) { 
-        ErrorContent(buff, "File NotFound!");
+        ErrorContent(buffer, "File NotFound!");
         LOG_INFO("open failed, %s", (srcDir_ + path_).c_str());
         return; 
     }
@@ -125,7 +125,7 @@ void HttpResponse::AppendContent(Buffer &buffer)
     /* 将文件映射到内存提高文件的访问速度 MAP_PRIVATE 建立一个写入时拷贝的私有映射*/
     int *mmRet = (int *)mmap(0, mmFileStat_.st_size, PROT_READ, MAP_PRIVATE, srcFd, 0);
     if(mmRet == nullptr || *mmRet == -1) {
-        ErrorContent(buff, "File NotFound!");
+        ErrorContent(buffer, "File NotFound!");
         return; 
     }
     mmFile_ = (char *)mmRet;
