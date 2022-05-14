@@ -3,11 +3,12 @@
 #include <log/log.h>
 
 const std::unordered_set<std::string> HttpRequst::DEFAULT_HTML {
-            "/index", "/register", "/login",
-             "/welcome", "/video", "/picture", };
+    "/index", "/register", "/login", "/welcome", "/video", "/picture", 
+};
 
 const std::unordered_map<std::string, int> HttpRequst::DEFAULT_HTML_TAG {
-            {"/register.html", 0}, {"/login.html", 1},  };
+    {"/register.html", 0}, {"/login.html", 1},
+};
 
 bool HttpRequst::Parse(Buffer &buffer)
 {
@@ -47,7 +48,6 @@ bool HttpRequst::Parse(Buffer &buffer)
 
 bool HttpRequst::ParseRequstLine(const std::string &line)
 {
-    // printf("line=%s\n", line.c_str());
     std::regex patten("^([^ ]*) ([^ ]*) HTTP/([^ ]*)$");
     std::smatch subMatch;
     if (std::regex_match(line, subMatch, patten)) {
@@ -55,7 +55,6 @@ bool HttpRequst::ParseRequstLine(const std::string &line)
         path_ = subMatch[2];
         version_ = subMatch[3];
         state_ = PARSE_HEADER;
-        // printf("method_=%s, path_=%s, version_=%s\n", method_.c_str(), path_.c_str(), version_.c_str());
         if (path_ == "/") {
             path_ += "index.html";
         } else {
@@ -79,7 +78,7 @@ void HttpRequst::ParseHeader(const std::string &line)
     if(!regex_match(line, subMatch, patten)) {
         state_ = PARSE_BODY;
     } else {
-        // printf("parse header %s\n", line.c_str());
+        
     }
 }
 

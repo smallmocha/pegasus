@@ -54,6 +54,8 @@ private:
     bool isOpen_;
     bool isAsync_;
     int level_;
+    int lineCnt_;
+    int today_;
     std::string path_;
     std::string suffix_;
     FILE *fp_;

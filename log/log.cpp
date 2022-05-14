@@ -35,6 +35,7 @@ void Log::Init(int level, std::string path, std::string suffix, size_t queCapaci
     level_ = level;
     path_ = path;
     suffix_ = suffix;
+    lineCnt_ = 0;
     if (queCapacity > 0) {
         isAsync_ = true;
         que_ = std::make_unique<BlockQueue<std::string>>(queCapacity);
@@ -49,6 +50,8 @@ void Log::Init(int level, std::string path, std::string suffix, size_t queCapaci
     struct tm *sysTime = localtime(&timer);
     // localtime函数不可重入，需要拷贝下来
     struct tm t = *sysTime;
+    today_ = t.tm_mday;
+
     char fileName[256];
     snprintf(fileName, sizeof(fileName) - 1, "%s/%04d_%02d_%02d%s", path_.c_str(),
         t.tm_year + 1900, t.tm_mon + 1, t.tm_mday, suffix_.c_str());
@@ -77,6 +80,23 @@ void Log::Write(int level, const char *format, ...)
     struct tm t = *sysTime;
 
     std::lock_guard<std::mutex> locker(mtx_);
+    if ((today_ != t.tm_mday) || (lineCnt_ > 0 && lineCnt_ % MAX_LINES == 0)) {
+        char fileName[256];
+        if (today_ != t.tm_mday) {
+            snprintf(fileName, sizeof(fileName) - 1, "%s/%04d_%02d_%02d%s", path_.c_str(),
+                t.tm_year + 1900, t.tm_mon + 1, t.tm_mday, suffix_.c_str());
+            lineCnt_ = 0;
+            today_ = t.tm_mday;
+        } else {
+            snprintf(fileName, sizeof(fileName) - 1, "%s/%04d_%02d_%02d_%d%s", path_.c_str(),
+                t.tm_year + 1900, t.tm_mon + 1, t.tm_mday, lineCnt_ / MAX_LINES, suffix_.c_str());
+        }
+        Flush();
+        fclose(fp_);
+        fp_ = fopen(fileName, "a");
+        assert(fp_ != nullptr);
+    }
+    ++lineCnt_;
     int n = snprintf(buffer_.BeginWrite(), 128, "%d-%02d-%02d %02d:%02d:%02d.%06ld ",
                      t.tm_year + 1900, t.tm_mon + 1, t.tm_mday,
                      t.tm_hour, t.tm_min, t.tm_sec, now.tv_usec);
@@ -89,7 +109,7 @@ void Log::Write(int level, const char *format, ...)
     int m = vsnprintf(buffer_.BeginWrite(), buffer_.WritableBytes(), format, vaList);
     va_end(vaList);
     buffer_.HasWritten(m);
-    buffer_.Append("\n\0");
+    buffer_.Append("\n\0", 2); // "\n\0"的len为1
 
     if (isAsync_ && que_ != nullptr && !que_->Full()) {
         que_->PushBack(buffer_.RetrieveAllToStr());

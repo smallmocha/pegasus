@@ -20,14 +20,12 @@ struct Timer {
         this->expires = expires;
         this->cb = cb;
     }
-};
 
-struct TimerCmp {
-    bool operator()(Timer *a, Timer *b) {
-        if (a->expires < b->expires) {
-            return true;
+    bool operator<(const Timer &rhs) const {
+        if (expires != rhs.expires) {
+            return expires < rhs.expires;
         }
-        return a->id < b->id;
+        return id < rhs.id;
     }
 };
 
@@ -44,7 +42,7 @@ private:
     void DelExpiresTimer();
 
 private:
-    std::set<Timer *, TimerCmp> timerList_;
+    std::set<Timer *> timerList_;
 };
 
 #endif

@@ -29,6 +29,13 @@ WebServer::~WebServer()
     close(listenFd_);
 }
 
+void WebServer::UpdateTimer(int fd)
+{
+    timerQueue_.Del(users_[fd].GetTimer());
+    Timer *timer = timerQueue_.Add(fd, 1000 * 20, std::bind(&WebServer::CloseConn, this, std::ref(users_[fd])));
+    users_[fd].SetTimer(timer);
+}
+
 void WebServer::HandleNewConn()
 {
     struct sockaddr_in addr;
@@ -37,42 +44,31 @@ void WebServer::HandleNewConn()
     if (connFd < 0) {
         return;
     }
-    printf("new connetion ip:%s fd:%d\n", inet_ntoa(addr.sin_addr), connFd);
-    // LOG_INFO("new connetion ip:%s fd:%d", inet_ntoa(addr.sin_addr), connFd);
     users_[connFd].Init(connFd, addr);
     epoller_.AddFd(connFd, EPOLLIN | EPOLLET | EPOLLONESHOT);
     SetFdNonBlock(connFd);
-    // Timer *timer = timerQueue_.Add(connFd, 1000 * 20, std::bind(&WebServer::CloseConn, this, std::ref(users_[connFd])));
-    // users_[connFd].SetTimer(timer);
-    LOG_INFO("Client[%d] in!", users_[connFd].GetFd());
+    Timer *timer = timerQueue_.Add(connFd, 1000 * 20, std::bind(&WebServer::CloseConn, this, std::ref(users_[connFd])));
+    users_[connFd].SetTimer(timer);
 }
 
 void WebServer::HandleRead(int fd)
 {
-    printf("epollin event, fd:%d\n", fd);
-    // LOG_INFO("epollin event, fd:%d", fd);
     assert(users_.count(fd) > 0);
-    // timerQueue_.Del(users_[fd].GetTimer());
-    // Timer *timer = timerQueue_.Add(fd, 1000 * 20, std::bind(&WebServer::CloseConn, this, std::ref(users_[fd])));
-    // users_[fd].SetTimer(timer);
+    UpdateTimer(fd);
     threadPool_->AddTask(std::bind(&WebServer::OnRead, this, std::ref(users_[fd])));
 }
 
 void WebServer::HandleWrite(int fd)
 {
-    printf("epollout event, fd=%d\n", fd);
-    // LOG_INFO("epollout event, fd=%d", fd);
-    // timerQueue_.Del(users_[fd].GetTimer());
-    // Timer *timer = timerQueue_.Add(fd, 1000 * 20, std::bind(&WebServer::CloseConn, this, std::ref(users_[fd])));
-    // users_[fd].SetTimer(timer);
+    assert(users_.count(fd) > 0);
+    UpdateTimer(fd);
     threadPool_->AddTask(std::bind(&WebServer::OnWrite, this, std::ref(users_[fd])));
 }
 
 void WebServer::CloseConn(HttpConn &client)
 {
-    printf("Client[%d] quit!\n", client.GetFd());
     LOG_INFO("Client[%d] quit!", client.GetFd());
-    // timerQueue_.Del(client.GetTimer());
+    timerQueue_.Del(client.GetTimer());
     epoller_.DelFd(client.GetFd());
     client.Close();
 }
@@ -118,10 +114,9 @@ void WebServer::OnWrite(HttpConn &client)
 void WebServer::Run()
 {
     while (true) {
-        // int timeout = timerQueue_.GetNextTick();
-        // printf("set timeout:%d\n", timeout);
-        // int num = epoller_.Wait(timeout);
-        int num = epoller_.Wait();
+        int timeout = timerQueue_.GetNextTick();
+        printf("set timeout:%d\n", timeout);
+        int num = epoller_.Wait(timeout);
         for (int i = 0; i < num; ++i) {
             int events = epoller_.GetEvents(i);
             int fd = epoller_.GetEventFd(i);

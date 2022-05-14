@@ -18,6 +18,7 @@ public:
 private:
     bool InitSocket();
 
+    void UpdateTimer(int fd);
     void HandleNewConn();
     void HandleRead(int fd);
     void HandleWrite(int fd);

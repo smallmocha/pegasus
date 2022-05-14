@@ -11,7 +11,7 @@ int HttpConn::Read(int &saveErrno)
         if (len <= 0) {
             break;
         }
-        printf("recv msg:\n%s\n", std::string(readBuff_.BeginRead(), readBuff_.ReadableBytes()).c_str());
+        // printf("recv msg:\n%s\n", std::string(readBuff_.BeginRead(), readBuff_.ReadableBytes()).c_str());
     } while (true);
     return len;
 }
@@ -66,6 +66,6 @@ bool HttpConn::Process()
         iov_[1].iov_len = httpResponse_.FileLen();
         iovCnt_ = 2;
     }
-    LOG_INFO("filesize:%d, %d  to %d", httpResponse_.FileLen() , iovCnt_, ToWriteBytes());
+    LOG_INFO("filesize(%d), iovCnt(%d), toWriteBytes(%d)", httpResponse_.FileLen() , iovCnt_, ToWriteBytes());
     return true;
 }
