@@ -115,7 +115,6 @@ void WebServer::Run()
 {
     while (true) {
         int timeout = timerQueue_.GetNextTick();
-        printf("set timeout:%d\n", timeout);
         int num = epoller_.Wait(timeout);
         for (int i = 0; i < num; ++i) {
             int events = epoller_.GetEvents(i);

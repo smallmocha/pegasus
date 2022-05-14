@@ -26,17 +26,14 @@ public:
 
     void Init(int threadNum) 
     {
-        printf("main thread tid:%ld\n", syscall(SYS_gettid));
         for (int i = 0; i < threadNum; ++i) {
             std::thread([pool = shared_from_this()](){
-                printf("create work thread, tid:%ld\n", syscall(SYS_gettid));
                 std::unique_lock<std::mutex> locker(pool->mutex_);
                 while(true) {
                     if (!pool->taskQue_.empty()) {
                         auto task = std::move(pool->taskQue_.front());
                         pool->taskQue_.pop();
                         locker.unlock();
-                        printf("run task in tid:%ld\n", syscall(SYS_gettid));
                         task();
                         locker.lock();
                     } else if (pool->isClosed_) {
